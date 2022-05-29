@@ -1,42 +1,34 @@
 
-const reader = new FileReader();
-reader.onload = function (event) {
-    console.log(event.target.result); // the CSV content as string
-  };
-
-reader.readAsText(file);
-
-
 function csvToArray(delimiter = ",") {
-    debugger
-    let csvFile = document.getElementById('spreadsheet');
+    const csvFile = document.getElementById('spreadsheet');
+    const reader = new FileReader();
 
-    // use split to create an array from csvFileing by delimiter
-    const headers = csvFile.slice(0, csvFile.indexOf("\n")).split(delimiter);
+    reader.addEventListener("load", () => {
+      debugger
+      // this will then display a text file
+      let data = reader.result;
+      // use split to create an array from csvFileing by delimiter
+      const headers = data.slice(0, data.indexOf("\n")).split(delimiter);
 
-    // use split to create an array of each csv value row
-    const rows = csvFile.slice(csvFile.indexOf("\n") + 1).split("\n");
-    const arr = rows.map(function (row) {
-      const values = row.split(delimiter);
-      const el = headers.reduce(function (object, header, index) {
-        object[header] = values[index];
-        return object;
-      }, {});
-      return el;
-    });
+      // use split to create an array of each csv value row
+      const rows = data.slice(data.indexOf("\n") + 1).split("\n");
+      const arr = rows.map(function (row) {
+        const values = row.split(delimiter);
+        const el = headers.reduce(function (object, header, index) {
+          object[header] = values[index];
+          return object;
+        }, {});
+        return el;
+      });
 
-    // return the array
-    return arr;
+      // return the array
+      return arr;
+    }, false);
+
+    if (csvFile.files[0]) {
+      reader.readAsText(csvFile.files[0]);
+    }
   }
-
- 
-reader.onload = function (e) {
-    const text = e.target.result;
-    const data = csvToArray(text);
-    document.write(JSON.stringify(data));
-    };
-    
-
 
 // After data has been loaded and parsed, find the dates where the 
 // rebalance changes by more than the input rebalance rate

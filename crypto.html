@@ -11,28 +11,28 @@
   <body>
     <h1 style="text-align: center;">Rebalancing Deviation Calculator</h1>
     <div id="calculator-input">
-      <div>
+      <div class="input-item">
         <label for="spreadsheet">Excel Spreadsheet:</label>
         <input type="file"
                id="spreadsheet" name="spreadsheet"
-               accept="image/png, image/jpeg">
+               accept=".csv">
       </div>
 
-      <div>
+      <div class="input-item">
         <label for="rate">Upper Rebalance Rate:</label>
         <input type="number" id="rate" name="rate"
                min="0" max="100">
         <span>%</span>
       </div>
 
-      <div>
+      <div class="input-item">
         <label for="rate">Lower Rebalance Rate:</label>
         <input type="number" id="rate" name="rate"
                min="0" max="100">
         <span>%</span>
       </div>
 
-      <button id="generate-button">Generate</button>
+      <button id="generate-button" onclick="csvToArray()">Generate</button>
     </div>
   </body>
 </html>

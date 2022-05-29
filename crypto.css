@@ -1,3 +1,8 @@
+body {
+    font-family: "Rubik";
+    background-color: #C3E0E5;
+}
+
 #calculator-input {
     display: flex;
     flex-direction: column;
@@ -5,22 +10,27 @@
     margin: 5rem;
     padding: 2rem;
     background-color: #5885AF;
+    border-radius: 1rem;
+}
 
+.input-item {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 #generate-button {
     width: 20rem;
-    height: 2rem;
+    height: 3rem;
     align-self: center;
     cursor: pointer;
     background-color: #274472;
     color: white;
     border-radius: 5px;
     border: none;
-}
-
-body {
-    background-color: #C3E0E5;
+    font-family: "Rubik";
+    font-size: 1rem;
 }
 
 /* #41729F */
