@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css?family=Rubik" rel="stylesheet" />
     <link href="./crypto.css" rel="stylesheet" />
     <script src="./crypto.js"></script>
+    <script src="https://d3js.org/d3.v4.js"></script>
 </head>
   <body>
     <h1 style="text-align: center;">Rebalancing Deviation Calculator</h1>
@@ -19,20 +20,22 @@
       </div>
 
       <div class="input-item">
-        <label for="rate">Upper Rebalance Rate:</label>
-        <input type="number" id="rate" name="rate"
+        <label for="upper-rate">Upper Rebalance Rate:</label>
+        <input type="number" id="upper-rate" name="upper-rate"
                min="0" max="100">
         <span>%</span>
       </div>
 
       <div class="input-item">
-        <label for="rate">Lower Rebalance Rate:</label>
-        <input type="number" id="rate" name="rate"
+        <label for="lower-rate">Lower Rebalance Rate:</label>
+        <input type="number" id="lower-rate" name="lower-rate"
                min="0" max="100">
         <span>%</span>
       </div>
 
       <button id="generate-button" onclick="csvToArray()">Generate</button>
     </div>
+
+    <div id="line-graph"></div>
   </body>
 </html>
