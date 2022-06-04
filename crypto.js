@@ -29,16 +29,18 @@ function csvToArray(delimiter = ",") {
 }
 
 // After data has been loaded and parsed, find the dates where the 
-// rebalance changes by more than the input rebalance rate
+// rebalance significantChanges by more than the input rebalance rate
 
 //{Date: some_date, UnixTimeStamp: time, Value: some_value}
 
 function getValues(valuesList, headers) {
 
-    const upperRate = parseFloat(document.getElementById("upper-rate").value);
-    const lowerRate = parseFloat(document.getElementById("lower-rate").value);
+    const upperRate = parseFloat(document.getElementById("upper-rate").value) / 100;
+    const lowerRate = parseFloat(document.getElementById("lower-rate").value) / 100;
     const values = headers[2];
     let rebalances = [];
+    let significantChanges = [];
+    let allChanges = [];
     
     // Get the first value
     let startPoint = parseFloat(valuesList[0][values]);
@@ -50,24 +52,65 @@ function getValues(valuesList, headers) {
         let upperThreshold = startPoint + startPoint * upperRate;
         let lowerThreshold = startPoint - startPoint * lowerRate;
 
+
+        // Date, Value, Percentage that it changed
         // Compare current value to rebalance rate thresholds
+        var amountChanged = ((currValue - startPoint) * 100).toFixed(2); 
+        amountChanged = amountChanged.toString() + "%";
+
+        //for all changes
+
+        allChanges.push(valuesList[i]);
+        
+        //if it's a significant change
         if (currValue > upperThreshold || currValue < lowerThreshold) {
+           
+           if(amountChanged > 0) {
+             amountChanged = "+" + amountChanged + "%";
+           }
+            //significantChanges.push(amountChanged);
             startPoint = currValue;
             rebalances.push(valuesList[i]);
+            significantChanges.push({"Date": valuesList[i][headers[0]], "Value": valuesList[i][headers[2]], "Percentage Changed": amountChanged});
         } 
-        
     }
 
     // create the line graph
-    lineGraph(valuesList, rebalances, headers);
-    console.log(`Rebalances have occurred at ${rebalances}`);
+    lineGraph(significantChanges, allChanges);
+
+    // add data to the table
+    let table = document.querySelector("table");
+    let data = Object.keys(significantChanges[0]);
+    generateTable(table, significantChanges);
+    generateTableHead(table, data);
 
 }
+
+function generateTableHead(table, data) {
+    let thead = table.createTHead();
+    let row = thead.insertRow();
+    for (let key of data) {
+      let th = document.createElement("th");
+      let text = document.createTextNode(key);
+      th.appendChild(text);
+      row.appendChild(th);
+    }
+  }
+  
+  function generateTable(table, data) {
+    for (let element of data) {
+      let row = table.insertRow();
+      for (key in element) {
+        let cell = row.insertCell();
+        let text = document.createTextNode(element[key]);
+        cell.appendChild(text);
+      }
+    }
+  }
 
 // Assume date is a string like "12/2/2019"
 // Returns the month in human
 function getMonthsFromDates(dates) {
-  debugger
   //Array of months that are in the csv
   let monthsIncluded = [];
 
@@ -100,7 +143,7 @@ function getMonthsFromDates(dates) {
   return months[month];*/
 }
 
-function lineGraph(data, rebalances, headers) {
+function lineGraph(significantChanges, allChanges) {
     // clear the previous svg
     d3.select("#line-graph").html(null);
 
@@ -119,7 +162,7 @@ function lineGraph(data, rebalances, headers) {
 
     // add X axis --> it is a date format
     var x = d3.scaleTime()
-              .domain(d3.extent(data, function(d) { return d3.timeParse("%m/%d/%Y")(d[headers[0]]); }))
+              .domain(d3.extent(significantChanges, function(d) { return d3.timeParse("%m/%d/%Y")(d["Date"]); }))
               .range([ 0, width ]);
 
     svg.append("g")
@@ -128,23 +171,77 @@ function lineGraph(data, rebalances, headers) {
 
     // add Y axis
     var y = d3.scaleLinear()
-              .domain([0, d3.max(data, function(d) { return +(parseFloat(d[headers[2]])); })])
+              .domain([0, d3.max(significantChanges, function(d) { return +(parseFloat(d["Value"])); })])
               .range([ height, 0 ]);
 
     svg.append("g")
        .call(d3.axisLeft(y));
 
+    // create a tooltip
+    var tooltip = d3.select("#line-graph")
+                    .append("div")
+                    .style("opacity", 0)
+                    .attr("class", "tooltip")
+                    .style("background-color", "white")
+                    .style("border", "solid")
+                    .style("border-width", "2px")
+                    .style("border-radius", "5px")
+                    .style("padding", "5px")
+
+    // Three function that change the tooltip when user hover / move / leave a cell
+    var mouseover = function(d) {
+        tooltip
+            .style("opacity", 1)
+        // d3.select(this)
+        //     .style("stroke", "black")
+        //     .style("opacity", 1)
+    }
+
+    var mousemove = function(d) {
+        console.log(d)
+        tooltip
+            .html(`Date: ${d["Date"]}<br/>Value: ${d["Value"]}<br/>Percentage Changed: ${d["Percentage Changed"]}`)
+            .style("left", (d3.mouse(this)[0]+70) + "px")
+            .style("top", (d3.mouse(this)[1]) + "px")
+    }
+
+    var mouseleave = function(d) {
+        tooltip
+            .style("opacity", 0)
+        // d3.select(this)
+        //     .style("stroke", "none")
+        //     .style("opacity", 0.8)
+    }
+
     // add the line
     svg.append("path")
-       .datum(data)
+       .datum(significantChanges)
        .attr("fill", "none")
        .attr("stroke", "#274472")
        .attr("stroke-width", 1.5)
        .attr("d", d3.line()
-            .x(function(d) { return x(d3.timeParse("%m/%d/%Y")(d[headers[0]]));})
-            .y(function(d) { return y(parseFloat((d[headers[2]]))); })
+            .x(function(d) { return x(d3.timeParse("%m/%d/%Y")(d["Date"])); })
+            .y(function(d) { return y(parseFloat((d["Value"]))); })
        )
+       .style("cursor", "pointer")
+    
 
+    // add dots on the line
+    // Add the points
+    svg.append("g")
+      .selectAll("dot")
+      .data(significantChanges)
+      .enter()
+      .append("circle")
+        .attr("cx", function(d) { return x(d3.timeParse("%m/%d/%Y")(d["Date"])); } )
+        .attr("cy", function(d) { return y(parseFloat((d["Value"]))); } )
+        .attr("r", .01)
+        .attr("stroke", "#69b3a2")
+        .attr("stroke-width", 1)
+        .attr("fill", "white")
+        .on("mouseover", mouseover)
+        .on("mousemove", mousemove)
+        .on("mouseleave", mouseleave)
 }
 
 function unixToDate(unixTimeStamp) {
